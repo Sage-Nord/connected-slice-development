@@ -16,3 +16,5 @@ npx skills add Sage-Nord/connected-slice-development
 ```
 
 Read [the skill](SKILL.md) for the full workflow and SwiftPM, Gradle/KMP, TypeScript, and Rust checks.
+
+[View on skills.sh](https://skills.sh/sage-nord/connected-slice-development/connected-slice-development).
