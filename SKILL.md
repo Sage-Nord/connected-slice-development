@@ -1,44 +1,42 @@
 ---
 name: connected-slice-development
-description: Use when adding or changing behavior in a slow-building application, including host-only UI/lifecycle work and features whose core might be built independently (SwiftPM, Gradle/KMP, TypeScript projects, Rust workspaces).
+description: Use when starting a software project, implementing or changing a feature, fixing a bug, or delivering a business ticket with AI, especially where slow builds or module boundaries could hide integration defects.
 ---
 
 # Connected Slice Development
 
-## Overview
+## The idea
 
-A connected slice is one small, host-visible production behavior, not an isolated prototype. Give it an independently buildable core only when there is a real boundary. Wire and test its actual host path early; core tests alone never prove the feature works.
+**The strongest practical default for AI-driven teams:** deliver one small, real behavior at a time. Use an independently buildable core only for an honest boundary, and connect it to the production host early. Aim for the earliest trustworthy answer at the lowest total cost, not the fewest builds.
 
-## When to Use
+Types and isolated tests cannot supply missing business intent or prove host behavior. A slice is production code, not a prototype or OS security sandbox.
 
-- New host-independent parsers, state machines, validation, or business rules.
-- Changes to an existing independent unit: **reuse it**, not a new package per ticket.
-- Host-only UI, lifecycle, or wiring work without an independent business rule.
+## Work one slice
 
-**Keep host-only slices in the host.** Test the smallest real host target; do not invent protocols or copy host models just for packaging.
+1. **Name the behavior.** Trace the real input, consumer, and observable outcome. Write one concrete expected example, including a failure or edge case. For a bug, reproduce its symptom before changing code. Clarify unknown rules; do not invent a policy to meet a deadline. Skip speculative spec gates; honor required specifications and approvals.
+2. **Choose the owner.** Keep UI, lifecycle, and wiring in the host. Reuse an existing unit for an existing capability. Create a new independently buildable unit only for a genuinely independent capability; never one per ticket. The host consumes the **same production source**.
+3. **Define the boundary.** Make raw units, valid states, sync/async, errors, cancellation, and threading explicit where relevant. Validate external data at its real adapter; types exclude structural mistakes, not wrong business meaning.
+4. **Connect early.** See a focused test fail for the intended reason, then make it pass. Use core tests when available; otherwise the smallest real host check. At the first working behavior, test the **real host path**, including its adapter and consumer where present, not a copy or fake. For a new project, establish a real entry point before extracting packages.
+5. **Verify what changed.** Rerun affected consumer tests after behavior changes even if public types did not change. Check affected platforms and production packaging where relevant. Report exact core/host commands, results, and gaps. Package-green is not app-green.
 
-## Workflow
+## Choose a reference when needed
 
-1. **Trace the real seam.** Follow affected host input, consumer, and visible behavior. Start with an expected-behavior example or test; ask about unknown intent. Define the code interface: source units, valid states, types, sync/async, errors, cancellation, and threading when relevant. No speculative Markdown spec is required.
-2. **Choose the production unit.** Reuse the module for an existing capability; create a package only for a genuinely independent one. Follow repository build conventions. The host must consume the *same source*. Filtering tests need not filter compilation.
-3. **Build the core when useful.** Use enums, newtypes, and validating constructors to exclude structural invalid states; inject narrow dependencies, not the app. See a focused test fail for the intended reason before making it pass. Types cannot prove raw units, time-dependent facts, or unknown business rules.
-4. **Connect early.** At the first working behavior, wire the **real host adapter and consumer** where applicable; test mapping, invalid inputs, and effects there. For host-only slices, test the real host path directly. Never defer integration or substitute a fake. If no small host check exists, report that gap.
-5. **Use two loops when applicable.** Run core tests during edits; rerun real adapter and affected consumer tests for mapping, interface, or behavior changes, **even with unchanged public types**. Check platform behavior on that platform; check production packaging or linking if packaging changes. Build graphs do not select behavior tests.
-6. **Report the boundary.** Give the host target, relevant interface/core if present, exact host and (when applicable) core test commands/results or unrun checks, platform or production checks, and gaps. Do not promise fixed test times, conflict-free merges, or faster CI.
+Read only the guide relevant to the current decision:
 
-## Quick Reference
+- [Work scenarios](references/scenarios.md): new project, feature, change, bug, business ticket.
+- [Boundaries and contracts](references/boundaries.md): where code belongs, typed interfaces, real adapters, worked example.
+- [Verification](references/verification.md): two feedback loops, test selection, CI, evidence and gaps.
+- [Build-system recipes](references/platforms.md): SwiftPM/Xcode, Gradle/KMP, TypeScript, Rust, Bazel/Nx.
+- [Team practice](references/team-practice.md): review, adoption, ownership, tradeoffs.
 
-| Ecosystem | Independent loop | Connected check |
+## Quick decisions
+
+| Situation | Place the work |
 |---|---|---|
-| SwiftPM | `swift test` in the package | Real app adapter test; `--filter` may still compile other targets |
-| Gradle/KMP | Focused module or standalone build | Host mapping and affected platforms, not JVM alone |
-| TypeScript | `tsc -b` plus focused tests | Consumer tests even with unchanged `.d.ts` |
-| Rust | `cargo test -p capability` | Dependent tests; rebuilds may include dependents |
-
-## Example
-
-`SeatAccess` tests `status(until: Date, at: Date)`. At `now = 3s`, the host's raw `deadlineMs = 2_500` means `.expired`. Interpreting it as seconds compiles and passes core tests, but fails the **real adapter** test.
+| Host-bound behavior | Existing host target; test its real path |
+| Existing capability | Existing unit plus affected host consumer |
+| New independent capability | Small production unit plus early real-host check |
 
 ## Red Flags
 
-New package for the same capability; copied host code; fake-only or deferred host check; package-green reported as app-green; platform behavior checked elsewhere; a new test never observed failing for its target bug.
+Packages per ticket; a fake-only host check; made-up policy; an unproven "red" test; package-green called app-green; platform checks on a different platform; promised conflict-free merges or universally faster CI.
